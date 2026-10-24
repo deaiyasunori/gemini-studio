@@ -1,529 +1,329 @@
 <!DOCTYPE html>
-<html lang="ja" class="h-full bg-slate-900 text-slate-100">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gemini Image Studio</title>
-    <!-- Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts Inter -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="h-screen w-screen bg-slate-900 font-sans antialiased flex flex-col overflow-hidden">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-    <!-- Header Navigation -->
-    <header class="bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3 md:px-6 md:py-4 flex items-center justify-between z-20 shrink-0">
-        <div class="flex items-center space-x-3">
-            <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-blue-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 shrink-0">
-                <i class="fa-solid font-bold fa-wand-magic-sparkles text-white text-base md:text-lg"></i>
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-indigo-500 to-purple-500 p-2 rounded-xl text-white shadow-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Gemini Image Studio</h1>
+                    <p class="text-[11px] text-slate-400">AI 画像生成 & アダプティブエディタ</p>
+                </div>
             </div>
-            <div>
-                <h1 class="font-bold text-base md:text-lg leading-tight bg-gradient-to-r from-purple-400 via-indigo-300 to-blue-400 bg-clip-text text-transparent">
-                    Gemini Image Studio
-                </h1>
-                <p class="text-[10px] md:text-xs text-slate-400">家族みんなのAI画像生成ギャラリー</p>
-            </div>
-        </div>
-
-        <div class="flex items-center space-x-2">
-            <button onclick="toggleApiKeyModal()" title="APIキー設定" class="p-2 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg text-xs flex items-center gap-1.5 transition border border-slate-700">
-                <i class="fa-solid fa-key text-amber-400"></i>
-                <span class="hidden sm:inline">APIキー設定</span>
+            <button id="openApiKeyModal" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-key text-indigo-400"></i>
+                <span>APIキー設定</span>
             </button>
         </div>
     </header>
 
-    <!-- Main App Container -->
-    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Controls Panel -->
+        <section class="lg:col-span-1 space-y-4 bg-slate-900/50 border border-slate-800/80 p-5 rounded-2xl h-fit">
+            <h2 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-indigo-400"></i> 生成設定
+            </h2>
 
-        <!-- Left Controls Sidebar -->
-        <aside class="w-full md:w-96 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 max-h-[45vh] md:max-h-full overflow-y-auto">
-            
-            <!-- Tabs for Prompt Modes -->
-            <div class="flex border-b border-slate-800 bg-slate-950/50 p-1 sticky top-0 z-10">
-                <button id="tab-simple" onclick="switchTab('simple')" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-indigo-400 bg-slate-800 shadow">
-                    <i class="fa-solid fa-pen-nib mr-1"></i> シンプル
-                </button>
-                <button id="tab-structured" onclick="switchTab('structured')" class="flex-1 py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-cubes mr-1"></i> 構造化アシスタント
-                </button>
+            <!-- Prompt -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-400">プロンプト (指示文)</label>
+                <textarea id="promptInput" rows="3" placeholder="例: 明治大学の武道館での卒業式、満開の桜..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
             </div>
 
-            <div class="p-4 md:p-5 space-y-5 flex-1">
+            <!-- Style Preset -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-400">画風スタイル</label>
+                <select id="styleSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    <option value="">指定なし (標準)</option>
+                    <option value="photorealistic, highly detailed, 8k resolution, cinematic lighting">フォトリアル (実写風)</option>
+                    <option value="anime style, vibrant colors, clean lines, high quality">アニメ調</option>
+                    <option value="watercolor painting, soft brush strokes, artistic">水彩画風</option>
+                    <option value="oil painting, textured canvas, classical art style">油絵風</option>
+                    <option value="3d render, blender, cute claymation style">3Dレンダリング</option>
+                </select>
+            </div>
+
+            <!-- Aspect Ratio -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-400">アスペクト比</label>
+                <select id="aspectRatio" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                    <option value="1:1">正方形 (1:1)</option>
+                    <option value="16:9">横長 (16:9)</option>
+                    <option value="9:16">縦長 (9:16)</option>
+                    <option value="4:3">標準 (4:3)</option>
+                </select>
+            </div>
+
+            <!-- Reference Image -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-medium text-slate-400">参考画像 (ポーズ・構図のヒント)</label>
+                <div id="dropZone" class="border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-xl p-3 text-center cursor-pointer transition bg-slate-950/50 relative">
+                    <input type="file" id="imageUpload" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer">
+                    <div id="uploadPlaceholder" class="text-xs text-slate-400 space-y-1">
+                        <i class="fa-solid fa-cloud-arrow-up text-indigo-400 text-base"></i>
+                        <p>画像をアップロード (任意)</p>
+                    </div>
+                    <div id="imagePreviewContainer" class="hidden relative">
+                        <img id="imagePreview" src="" class="max-h-20 mx-auto rounded-lg object-contain">
+                        <button id="removeImage" type="button" class="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow">×</button>
+                    </div>
+                </div>
+                <p class="text-[10px] text-slate-500">※画像はそのままコピーせず、構図やポーズの参考としてのみ利用されます。</p>
+            </div>
+
+            <!-- Generate Button -->
+            <button id="generateBtn" class="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium py-3 rounded-xl shadow-lg shadow-indigo-500/20 transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-wand-magic"></i>
+                <span>画像を生成する</span>
+            </button>
+        </section>
+
+        <!-- Preview / Workspace Panel -->
+        <section class="lg:col-span-2 flex flex-col space-y-4">
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl flex-1 flex flex-col items-center justify-center p-6 min-h-[420px] relative overflow-hidden">
                 
-                <!-- Simple Input View -->
-                <div id="view-simple" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                            プロンプト（指示文）
-                        </label>
-                        <textarea id="prompt-input" rows="3" 
-                            class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs md:text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition"
-                            placeholder="例：ネオンが輝くサイバーパンクな東京の街並みを歩く柴犬、水彩画スタイル..."></textarea>
-                    </div>
-
-                    <!-- Reference Image Attachment Area -->
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                            参考画像（任意）
-                        </label>
-                        <div class="relative border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-3 bg-slate-950 transition flex flex-col items-center justify-center text-center cursor-pointer group">
-                            <input type="file" id="reference-image-input" accept="image/*" onchange="handleReferenceImageSelect(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                            
-                            <div id="upload-placeholder" class="space-y-1">
-                                <i class="fa-solid fa-cloud-arrow-up text-slate-500 group-hover:text-indigo-400 text-base transition"></i>
-                                <p class="text-xs text-slate-400 font-medium">画像を選択またはドラッグ＆ドロップ</p>
-                            </div>
-
-                            <div id="upload-preview-container" class="hidden relative w-full flex items-center space-x-3 text-left">
-                                <img id="upload-preview-img" src="" class="w-10 h-10 rounded-lg object-cover border border-slate-700 shadow">
-                                <div class="flex-1 overflow-hidden">
-                                    <p id="upload-filename" class="text-xs text-slate-200 font-medium truncate">image.png</p>
-                                    <span class="inline-block text-[10px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">参考画像設定済み</span>
-                                </div>
-                                <button type="button" onclick="removeReferenceImage(event)" class="z-20 text-slate-400 hover:text-rose-400 p-1 rounded-lg transition">
-                                    <i class="fa-solid fa-xmark text-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Structured Input View -->
-                <div id="view-structured" class="space-y-2.5 hidden">
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">主題 (Subject)</label>
-                        <input id="struct-subject" type="text" placeholder="例：黒猫、未来的なスポーツカー" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">状態・アクション (Action)</label>
-                        <input id="struct-action" type="text" placeholder="例：コーヒーを飲みながら読書している" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">場所・背景 (Environment)</label>
-                        <input id="struct-environment" type="text" placeholder="例：緑豊かな温室カフェ" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">光・雰囲気 (Lighting & Tone)</label>
-                        <input id="struct-lighting" type="text" placeholder="例：木漏れ日、柔らかい朝の光" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-                    </div>
-                </div>
-
-                <!-- Aspect Ratio Selection -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                        アスペクト比
-                    </label>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button type="button" onclick="selectAspectRatio('1:1')" class="ratio-btn active border-indigo-500 bg-indigo-500/10 text-indigo-300 border rounded-lg py-1.5 flex flex-col items-center justify-center transition">
-                            <i class="fa-regular fa-square text-xs mb-1"></i>
-                            <span class="text-[10px] font-medium">1:1</span>
-                        </button>
-                        <button type="button" onclick="selectAspectRatio('16:9')" class="ratio-btn border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-500 border rounded-lg py-1.5 flex flex-col items-center justify-center transition">
-                            <i class="fa-solid fa-expand text-xs mb-1"></i>
-                            <span class="text-[10px] font-medium">16:9</span>
-                        </button>
-                        <button type="button" onclick="selectAspectRatio('9:16')" class="ratio-btn border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-500 border rounded-lg py-1.5 flex flex-col items-center justify-center transition">
-                            <i class="fa-solid fa-mobile-screen text-xs mb-1"></i>
-                            <span class="text-[10px] font-medium">9:16</span>
-                        </button>
-                        <button type="button" onclick="selectAspectRatio('4:3')" class="ratio-btn border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-500 border rounded-lg py-1.5 flex flex-col items-center justify-center transition">
-                            <i class="fa-solid fa-tv text-xs mb-1"></i>
-                            <span class="text-[10px] font-medium">4:3</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Style Preset Selector -->
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                        画風・スタイル
-                    </label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" onclick="toggleStyle('写実的な写真風、極めて高精細 (Photorealistic, highly detailed)', this)" class="style-btn text-left p-2 rounded-lg border border-slate-700 bg-slate-950 hover:border-slate-600 text-xs text-slate-300 flex items-center space-x-2 transition">
-                            <i class="fa-solid fa-camera text-slate-400"></i>
-                            <span class="truncate">リアル写真</span>
-                        </button>
-                        <button type="button" onclick="toggleStyle('水彩画スタイル、柔らかいタッチ (Watercolor painting)', this)" class="style-btn text-left p-2 rounded-lg border border-slate-700 bg-slate-950 hover:border-slate-600 text-xs text-slate-300 flex items-center space-x-2 transition">
-                            <i class="fa-solid fa-palette text-slate-400"></i>
-                            <span class="truncate">水彩画</span>
-                        </button>
-                        <button type="button" onclick="toggleStyle('アニメスタイル、鮮やかな色彩 (Anime art style)', this)" class="style-btn text-left p-2 rounded-lg border border-slate-700 bg-slate-950 hover:border-slate-600 text-xs text-slate-300 flex items-center space-x-2 transition">
-                            <i class="fa-solid fa-hat-wizard text-slate-400"></i>
-                            <span class="truncate">アニメ風</span>
-                        </button>
-                        <button type="button" onclick="toggleStyle('3Dレンダリング、立体感 (3D render, Pixar style)', this)" class="style-btn text-left p-2 rounded-lg border border-slate-700 bg-slate-950 hover:border-slate-600 text-xs text-slate-300 flex items-center space-x-2 transition">
-                            <i class="fa-solid fa-cube text-slate-400"></i>
-                            <span class="truncate">3D CG</span>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Submit Button Area -->
-            <div class="p-4 bg-slate-950/80 border-t border-slate-800 sticky bottom-0">
-                <button onclick="generateImage()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 transition duration-200">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>画像を生成する</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Right Workspace / Gallery Area -->
-        <section class="flex-1 bg-slate-950 flex flex-col h-full overflow-hidden relative">
-
-            <!-- Main Canvas Display -->
-            <div class="flex-1 flex flex-col items-center justify-center p-4 md:p-6 relative overflow-y-auto">
-                
-                <!-- Initial Empty State -->
-                <div id="state-empty" class="text-center max-w-sm p-6 rounded-2xl border border-dashed border-slate-800">
-                    <div class="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-3 text-indigo-400 text-xl">
-                        <i class="fa-regular fa-image"></i>
-                    </div>
-                    <h3 class="text-slate-200 font-semibold text-sm mb-1">画像が生成されていません</h3>
-                    <p class="text-xs text-slate-500">プロンプトを入力して「画像を生成する」を押してください。</p>
-                </div>
-
                 <!-- Loading State -->
-                <div id="state-loading" class="hidden flex-col items-center justify-center">
-                    <div class="relative w-16 h-16 mb-4">
-                        <div class="absolute inset-0 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-indigo-400">
-                            <i class="fa-solid fa-sparkles text-lg animate-pulse"></i>
-                        </div>
-                    </div>
-                    <p class="text-slate-200 font-medium text-sm mb-1">Geminiが描画中...</p>
+                <div id="loadingState" class="hidden flex flex-col items-center space-y-3">
+                    <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p class="text-sm text-slate-400">Geminiが新しい画像を生成中です...</p>
                 </div>
 
-                <!-- Active Image View -->
-                <div id="state-active" class="hidden flex-col items-center max-w-full max-h-full">
-                    <div class="relative group rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl max-h-[50vh] md:max-h-[60vh] flex items-center justify-center">
-                        <img id="current-image" src="" alt="生成画像" class="max-h-[50vh] md:max-h-[60vh] max-w-full object-contain">
-                        
-                        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-full px-3 py-1.5 flex items-center space-x-2">
-                            <button onclick="downloadCurrentImage()" class="text-slate-300 hover:text-white text-xs font-medium flex items-center gap-1 px-2 py-1 hover:bg-slate-800 rounded-lg transition">
-                                <i class="fa-solid fa-download"></i> 保存
+                <!-- Initial State -->
+                <div id="initialState" class="text-center space-y-2 text-slate-500">
+                    <i class="fa-solid fa-image text-4xl mb-2"></i>
+                    <p class="text-sm">プロンプトを入力して「画像を生成する」を押してください</p>
+                </div>
+
+                <!-- Result Image Container -->
+                <div id="resultContainer" class="hidden flex flex-col items-center space-y-4 w-full h-full">
+                    <img id="resultImage" src="" class="max-h-[400px] w-auto rounded-xl shadow-2xl border border-slate-800 object-contain">
+                    
+                    <!-- Modification / Refinement Input (Restored!) -->
+                    <div class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
+                        <label class="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-pen-nib text-indigo-400"></i> この画像をベースに再調整・追加指示する
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="refinePromptInput" placeholder="例: もう少し明るく、笑顔を強調して..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <button id="refineBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-rotate-right"></i> 更新
                             </button>
                         </div>
                     </div>
-                </div>
 
-            </div>
-
-            <!-- History Bar -->
-            <div class="h-24 shrink-0 bg-slate-900/90 border-t border-slate-800 p-2.5 flex flex-col justify-center">
-                <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                    <span><i class="fa-regular fa-images text-indigo-400 mr-1"></i>ギャラリー (<span id="history-count">0</span>)</span>
-                    <button onclick="clearHistory()" class="text-slate-500 hover:text-slate-300 transition text-[10px]">クリア</button>
-                </div>
-                <div id="history-list" class="flex space-x-2 overflow-x-auto pb-1 items-center">
-                    <p id="history-empty-text" class="text-xs text-slate-600 italic">生成履歴がここに表示されます</p>
+                    <div class="flex space-x-3">
+                        <a id="downloadBtn" download="generated-image.png" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-medium flex items-center space-x-2 transition border border-slate-700">
+                            <i class="fa-solid fa-download"></i>
+                            <span>画像をダウンロード</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-
         </section>
+
     </main>
 
-    <!-- API Key Settings Modal -->
-    <div id="api-key-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <div class="flex items-center justify-between">
-                <h3 class="text-base font-bold text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-key text-amber-400"></i> APIキーの設定
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-key text-indigo-400"></i> Gemini APIキーの設定
                 </h3>
-                <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <button id="closeApiKeyModal" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <p class="text-xs text-slate-400 leading-relaxed">
-                Google AI Studioで取得したGemini APIキーを入力してください。入力されたキーはお使いのブラウザ（ローカルストレージ）にのみ安全に保存されます。
+            <p class="text-xs text-slate-400">
+                Google AI Studioで取得したAPIキーを入力してください。キーはブラウザのローカルストレージにのみ保存されます。
             </p>
-            <input id="user-api-key" type="password" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
             <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="toggleApiKeyModal()" class="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:bg-slate-800 transition">キャンセル</button>
-                <button onclick="saveApiKey()" class="px-4 py-2 rounded-xl text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition">保存する</button>
+                <button id="saveApiKey" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded-xl font-medium transition">保存する</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-4 right-4 z-50 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-2.5 rounded-xl shadow-xl flex items-center space-x-2 transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none">
-        <i class="fa-solid fa-circle-info text-indigo-400 text-sm"></i>
-        <span id="toast-message" class="text-xs font-medium">通知</span>
-    </div>
-
     <script>
-        const state = {
-            activeTab: 'simple',
-            selectedAspectRatio: '1:1',
-            selectedStyle: '',
-            currentImageUri: null,
-            history: [],
-            apiKey: localStorage.getItem('gemini_image_api_key') || ''
-        };
+        const apiKeyModal = document.getElementById('apiKeyModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        
+        // Load API Key
+        const savedKey = localStorage.getItem('gemini_image_api_key');
+        if (savedKey) {
+            apiKeyInput.value = savedKey;
+        } else {
+            apiKeyModal.classList.remove('hidden');
+        }
 
-        window.onload = function() {
-            if (state.apiKey) {
-                document.getElementById('user-api-key').value = state.apiKey;
+        document.getElementById('openApiKeyModal').addEventListener('click', () => apiKeyModal.classList.remove('hidden'));
+        document.getElementById('closeApiKeyModal').addEventListener('click', () => apiKeyModal.classList.add('hidden'));
+        document.getElementById('saveApiKey').addEventListener('click', () => {
+            if (apiKeyInput.value.trim()) {
+                localStorage.setItem('gemini_image_api_key', apiKeyInput.value.trim());
+                apiKeyModal.classList.add('hidden');
             } else {
-                setTimeout(() => {
-                    if (!localStorage.getItem('gemini_image_api_key')) {
-                        toggleApiKeyModal();
-                        showToast("APIキーを設定してください", "info");
-                    }
-                }, 500);
+                alert('APIキーを入力してください');
             }
-        };
+        });
 
-        function toggleApiKeyModal() {
-            document.getElementById('api-key-modal').classList.toggle('hidden');
-        }
+        let base64Image = null;
+        let currentLatestImageBase64 = null;
 
-        function saveApiKey() {
-            const key = document.getElementById('user-api-key').value.trim();
-            if (!key) {
-                showToast("APIキーを入力してください", "error");
-                return;
+        // Image Upload Handler
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const removeImage = document.getElementById('removeImage');
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (uploadEvent) => {
+                    base64Image = uploadEvent.target.result.split(',')[1];
+                    imagePreview.src = uploadEvent.target.result;
+                    uploadPlaceholder.classList.add('hidden');
+                    imagePreviewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
             }
-            state.apiKey = key;
-            localStorage.setItem('gemini_image_api_key', key);
-            toggleApiKeyModal();
-            showToast("APIキーを保存しました", "success");
-        }
+        });
 
-        function switchTab(tab) {
-            state.activeTab = tab;
-            document.getElementById('tab-simple').className = tab === 'simple' 
-                ? "flex-1 py-2 text-xs font-semibold rounded-lg text-indigo-400 bg-slate-800 shadow" 
-                : "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200";
-            document.getElementById('tab-structured').className = tab === 'structured' 
-                ? "flex-1 py-2 text-xs font-semibold rounded-lg text-indigo-400 bg-slate-800 shadow" 
-                : "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-400 hover:text-slate-200";
+        removeImage.addEventListener('click', () => {
+            base64Image = null;
+            imageUpload.value = '';
+            imagePreview.src = '';
+            imagePreviewContainer.classList.add('hidden');
+            uploadPlaceholder.classList.remove('hidden');
+        });
 
-            document.getElementById('view-simple').classList.toggle('hidden', tab !== 'simple');
-            document.getElementById('view-structured').classList.toggle('hidden', tab !== 'structured');
-        }
-
-        function selectAspectRatio(ratio) {
-            state.selectedAspectRatio = ratio;
-            document.querySelectorAll('.ratio-btn').forEach(btn => {
-                btn.classList.remove('active', 'border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
-                btn.classList.add('border-slate-700', 'bg-slate-950', 'text-slate-400');
-            });
-            event.currentTarget.classList.add('active', 'border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
-            event.currentTarget.classList.remove('border-slate-700', 'bg-slate-950', 'text-slate-400');
-        }
-
-        function toggleStyle(styleText, btnElement) {
-            if (state.selectedStyle === styleText) {
-                state.selectedStyle = '';
-                btnElement.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
-                btnElement.classList.add('border-slate-700', 'bg-slate-950', 'text-slate-300');
-            } else {
-                state.selectedStyle = styleText;
-                document.querySelectorAll('.style-btn').forEach(b => {
-                    b.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
-                    b.classList.add('border-slate-700', 'bg-slate-950', 'text-slate-300');
-                });
-                btnElement.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
-                btnElement.classList.remove('border-slate-700', 'bg-slate-950', 'text-slate-300');
-            }
-        }
-
-        let referenceImageBase64 = null;
-        let referenceImageMime = null;
-
-        function handleReferenceImageSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const dataUrl = e.target.result;
-                const matches = dataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-                if (matches) {
-                    referenceImageMime = matches[1];
-                    referenceImageBase64 = matches[2];
-                    document.getElementById('upload-preview-img').src = dataUrl;
-                    document.getElementById('upload-filename').innerText = file.name;
-                    document.getElementById('upload-placeholder').classList.add('hidden');
-                    document.getElementById('upload-preview-container').classList.remove('hidden');
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function removeReferenceImage(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            referenceImageBase64 = null;
-            referenceImageMime = null;
-            document.getElementById('reference-image-input').value = '';
-            document.getElementById('upload-placeholder').classList.remove('hidden');
-            document.getElementById('upload-preview-container').classList.add('hidden');
-        }
-
-        function buildPrompt() {
-            let basePrompt = state.activeTab === 'simple' 
-                ? document.getElementById('prompt-input').value.trim()
-                : [
-                    document.getElementById('struct-subject').value.trim(),
-                    document.getElementById('struct-action').value.trim(),
-                    document.getElementById('struct-environment').value.trim(),
-                    document.getElementById('struct-lighting').value.trim()
-                ].filter(Boolean).join(', ');
-
-            if (!basePrompt) return '';
-            if (state.selectedStyle) basePrompt += `, Style: ${state.selectedStyle}`;
-            return basePrompt;
-        }
-
-        async function generateImage() {
+        // Core Generation Function
+        async function generateImage(promptText, useImageAsReference = true) {
             const apiKey = localStorage.getItem('gemini_image_api_key');
             if (!apiKey) {
-                toggleApiKeyModal();
-                showToast("APIキーが未設定です。入力してください。", "error");
+                apiKeyModal.classList.remove('hidden');
+                alert('APIキーを設定してください。');
+                return;
+            }
+            if (!promptText) {
+                alert('プロンプトを入力してください。');
                 return;
             }
 
-            const finalPrompt = buildPrompt();
-            if (!finalPrompt) {
-                showToast("プロンプトを入力してください", "error");
-                return;
+            const style = document.getElementById('styleSelect').value;
+            const aspectRatio = document.getElementById('aspectRatio').value;
+
+            // Strict instructions to prevent copying reference image literally, treating it only as pose/composition guide
+            let finalPrompt = `Create a brand new original image based on this core instruction: "${promptText}". `;
+            if (style) {
+                finalPrompt += `Apply the following artistic style strictly: ${style}. `;
+            }
+            finalPrompt += `Aspect ratio target: ${aspectRatio}. `;
+            
+            if (useImageAsReference && base64Image) {
+                finalPrompt += `Note: An optional reference image is provided. DO NOT copy or duplicate the reference image directly. Use it strictly and abstractly as a loose reference for character posing, composition, or general layout inspiration only, while completely redesigning the background, setting, lighting, clothing, and art style according to the prompt instructions.`;
             }
 
-            setLoading(true);
+            const loadingState = document.getElementById('loadingState');
+            const initialState = document.getElementById('initialState');
+            const resultContainer = document.getElementById('resultContainer');
 
-            const userParts = [{ text: finalPrompt }];
-            if (referenceImageBase64) {
-                userParts.push({
-                    inlineData: { mimeType: referenceImageMime, data: referenceImageBase64 }
-                });
-            }
-
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: userParts }],
-                generationConfig: {
-                    responseModalities: ["TEXT", "IMAGE"]
-                }
-            };
+            initialState.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            loadingState.classList.remove('hidden');
 
             try {
-                const response = await fetch(apiUrl, {
+                let contents = [];
+                if (useImageAsReference && base64Image) {
+                    contents.push({
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: base64Image
+                        }
+                    });
+                }
+                contents.push({ text: finalPrompt });
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({
+                        contents: [{ parts: contents }],
+                        generationConfig: {
+                            responseModalities: ["TEXT", "IMAGE"]
+                        }
+                    })
                 });
 
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-                const result = await response.json();
+                const data = await response.json();
                 
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
                 let imageUrl = null;
-                const candidate = result?.candidates?.[0];
-                if (candidate?.content?.parts) {
-                    for (const part of candidate.content.parts) {
+                if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
+                    for (const part of data.candidates[0].content.parts) {
                         if (part.inlineData) {
-                            imageUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`;
+                            imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
                             break;
                         }
                     }
                 }
 
                 if (imageUrl) {
-                    displayGeneratedImage(imageUrl);
-                    addToHistory(imageUrl);
-                    showToast("画像を生成しました！", "success");
+                    currentLatestImageBase64 = imageUrl;
+                    document.getElementById('resultImage').src = imageUrl;
+                    document.getElementById('downloadBtn').href = imageUrl;
+                    loadingState.classList.add('hidden');
+                    resultContainer.classList.remove('hidden');
                 } else {
-                    throw new Error("画像データの取得に失敗しました。");
+                    throw new Error("画像データが取得できませんでした。プロンプトを調整してお試しください。");
                 }
+
             } catch (error) {
-                showToast("生成失敗: " + error.message, "error");
-            } finally {
-                setLoading(false);
+                loadingState.classList.add('hidden');
+                initialState.classList.remove('hidden');
+                alert('エラーが発生しました: ' + error.message);
             }
         }
 
-        function setLoading(isLoading) {
-            document.getElementById('state-empty').classList.add('hidden');
-            document.getElementById('state-active').classList.add('hidden');
-            document.getElementById('state-loading').classList.toggle('hidden', !isLoading);
-            document.getElementById('state-loading').classList.toggle('flex', isLoading);
-        }
+        // Generate Handler
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const promptText = document.getElementById('promptInput').value.trim();
+            generateImage(promptText, true);
+        });
 
-        function displayGeneratedImage(url) {
-            state.currentImageUri = url;
-            document.getElementById('current-image').src = url;
-            document.getElementById('state-loading').classList.add('hidden');
-            document.getElementById('state-active').classList.remove('hidden');
-            document.getElementById('state-active').classList.add('flex');
-        }
-
-        function downloadCurrentImage() {
-            if (!state.currentImageUri) return;
-            const a = document.createElement('a');
-            a.href = state.currentImageUri;
-            a.download = `gemini-studio-${Date.now()}.png`;
-            a.click();
-        }
-
-        function addToHistory(url) {
-            state.history.unshift(url);
-            updateHistoryUI();
-        }
-
-        function updateHistoryUI() {
-            const listEl = document.getElementById('history-list');
-            document.getElementById('history-count').innerText = state.history.length;
-
-            if (state.history.length === 0) {
-                listEl.innerHTML = '<p class="text-xs text-slate-600 italic">生成履歴がここに表示されます</p>';
+        // Refine / Update Handler
+        document.getElementById('refineBtn').addEventListener('click', () => {
+            const refineText = document.getElementById('refinePromptInput').value.trim();
+            const originalPrompt = document.getElementById('promptInput').value.trim();
+            if (!refineText) {
+                alert('追加の調整指示を入力してください。');
                 return;
             }
-
-            listEl.innerHTML = '';
-            state.history.forEach((imgUrl) => {
-                const thumb = document.createElement('div');
-                thumb.className = "relative flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden border border-slate-700 cursor-pointer hover:border-indigo-500 transition";
-                thumb.onclick = () => displayGeneratedImage(imgUrl);
-                thumb.innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover">`;
-                listEl.appendChild(thumb);
-            });
-        }
-
-        function clearHistory() {
-            state.history = [];
-            updateHistoryUI();
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').innerText = message;
-            toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            toast.classList.add('translate-y-0', 'opacity-100');
-            setTimeout(() => {
-                toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            }, 3000);
-        }
+            generateImage(`${originalPrompt}. Additional adjustments: ${refineText}`, false);
+        });
     </script>
 </body>
 </html>
