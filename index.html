@@ -25,7 +25,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-base tracking-tight bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Gemini Image Studio</h1>
-                    <p class="text-[11px] text-slate-400">AI 画像生成 & アダプティブエディタ</p>
+                    <p class="text-[11px] text-slate-400">AI 画像生成 & ギャラリー</p>
                 </div>
             </div>
             <button id="openApiKeyModal" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center space-x-1.5 transition">
@@ -88,7 +88,7 @@
                         <button id="removeImage" type="button" class="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow">×</button>
                     </div>
                 </div>
-                <p class="text-[10px] text-slate-500">※画像はそのままコピーせず、構図やポーズの参考としてのみ利用されます。</p>
+                <p class="text-[10px] text-slate-500">※画像は構図・ポーズの参考としてのみ利用し、そのままコピーしません。</p>
             </div>
 
             <!-- Generate Button -->
@@ -98,9 +98,10 @@
             </button>
         </section>
 
-        <!-- Preview / Workspace Panel -->
-        <section class="lg:col-span-2 flex flex-col space-y-4">
-            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl flex-1 flex flex-col items-center justify-center p-6 min-h-[420px] relative overflow-hidden">
+        <!-- Preview / Workspace Panel & Gallery -->
+        <section class="lg:col-span-2 flex flex-col space-y-6">
+            <!-- Main Preview Box -->
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl flex flex-col items-center justify-center p-6 min-h-[400px] relative overflow-hidden">
                 
                 <!-- Loading State -->
                 <div id="loadingState" class="hidden flex flex-col items-center space-y-3">
@@ -109,16 +110,16 @@
                 </div>
 
                 <!-- Initial State -->
-                <div id="initialState" class="text-center space-y-2 text-slate-500">
+                <div id="initialState" class="text-center space-y-2 text-slate-500 py-12">
                     <i class="fa-solid fa-image text-4xl mb-2"></i>
                     <p class="text-sm">プロンプトを入力して「画像を生成する」を押してください</p>
                 </div>
 
                 <!-- Result Image Container -->
-                <div id="resultContainer" class="hidden flex flex-col items-center space-y-4 w-full h-full">
-                    <img id="resultImage" src="" class="max-h-[400px] w-auto rounded-xl shadow-2xl border border-slate-800 object-contain">
+                <div id="resultContainer" class="hidden flex flex-col items-center space-y-4 w-full">
+                    <img id="resultImage" src="" class="max-h-[380px] w-auto rounded-xl shadow-2xl border border-slate-800 object-contain">
                     
-                    <!-- Modification / Refinement Input (Restored!) -->
+                    <!-- Modification / Refinement Input -->
                     <div class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
                         <label class="text-xs font-medium text-slate-400 flex items-center gap-1.5">
                             <i class="fa-solid fa-pen-nib text-indigo-400"></i> この画像をベースに再調整・追加指示する
@@ -136,6 +137,21 @@
                             <i class="fa-solid fa-download"></i>
                             <span>画像をダウンロード</span>
                         </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gallery Section (Restored!) -->
+            <div class="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-images text-indigo-400"></i> 生成ギャラリー (<span id="galleryCount">0</span>)
+                    </h3>
+                    <button id="clearGalleryBtn" class="text-[10px] text-slate-400 hover:text-red-400 transition">すべてクリア</button>
+                </div>
+                <div id="galleryGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div id="galleryEmpty" class="col-span-full text-center py-6 text-xs text-slate-500">
+                        生成された画像がここにたまっていきます
                     </div>
                 </div>
             </div>
@@ -186,7 +202,7 @@
         });
 
         let base64Image = null;
-        let currentLatestImageBase64 = null;
+        let galleryImages = [];
 
         // Image Upload Handler
         const imageUpload = document.getElementById('imageUpload');
@@ -217,6 +233,48 @@
             uploadPlaceholder.classList.remove('hidden');
         });
 
+        // Gallery UI Renderer
+        function updateGalleryUI() {
+            const galleryGrid = document.getElementById('galleryGrid');
+            const galleryCount = document.getElementById('galleryCount');
+            galleryCount.textContent = galleryImages.length;
+
+            if (galleryImages.length === 0) {
+                galleryGrid.innerHTML = `
+                    <div id="galleryEmpty" class="col-span-full text-center py-6 text-xs text-slate-500">
+                        生成された画像がここにたまっていきます
+                    </div>`;
+                return;
+            }
+
+            galleryGrid.innerHTML = '';
+            galleryImages.forEach((imgSrc, index) => {
+                const thumbDiv = document.createElement('div');
+                thumbDiv.className = "relative group aspect-square rounded-xl overflow-hidden border border-slate-800 bg-slate-950 cursor-pointer";
+                thumbDiv.innerHTML = `
+                    <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-105 transition">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <i class="fa-solid fa-magnifying-glass-plus text-white text-sm"></i>
+                    </div>
+                `;
+                thumbDiv.addEventListener('click', () => {
+                    document.getElementById('resultImage').src = imgSrc;
+                    document.getElementById('downloadBtn').href = imgSrc;
+                    document.getElementById('initialState').classList.add('hidden');
+                    document.getElementById('resultContainer').classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+                galleryGrid.appendChild(thumbDiv);
+            });
+        }
+
+        document.getElementById('clearGalleryBtn').addEventListener('click', () => {
+            if (confirm('ギャラリーの履歴をすべてクリアしますか？')) {
+                galleryImages = [];
+                updateGalleryUI();
+            }
+        });
+
         // Core Generation Function
         async function generateImage(promptText, useImageAsReference = true) {
             const apiKey = localStorage.getItem('gemini_image_api_key');
@@ -233,7 +291,6 @@
             const style = document.getElementById('styleSelect').value;
             const aspectRatio = document.getElementById('aspectRatio').value;
 
-            // Strict instructions to prevent copying reference image literally, treating it only as pose/composition guide
             let finalPrompt = `Create a brand new original image based on this core instruction: "${promptText}". `;
             if (style) {
                 finalPrompt += `Apply the following artistic style strictly: ${style}. `;
@@ -292,11 +349,14 @@
                 }
 
                 if (imageUrl) {
-                    currentLatestImageBase64 = imageUrl;
                     document.getElementById('resultImage').src = imageUrl;
                     document.getElementById('downloadBtn').href = imageUrl;
                     loadingState.classList.add('hidden');
                     resultContainer.classList.remove('hidden');
+
+                    // Add to Gallery
+                    galleryImages.unshift(imageUrl);
+                    updateGalleryUI();
                 } else {
                     throw new Error("画像データが取得できませんでした。プロンプトを調整してお試しください。");
                 }
