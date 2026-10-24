@@ -286,7 +286,6 @@
             if (state.apiKey) {
                 document.getElementById('user-api-key').value = state.apiKey;
             } else {
-                // 初回アクセス時などでキーが未設定の場合はモーダルを促す
                 setTimeout(() => {
                     if (!localStorage.getItem('gemini_image_api_key')) {
                         toggleApiKeyModal();
@@ -421,7 +420,7 @@
                 });
             }
 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
             const payload = {
                 contents: [{ parts: userParts }],
                 generationConfig: {
