@@ -27,10 +27,6 @@
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <button id="luckyBtn" class="text-xs bg-indigo-950 hover:bg-indigo-900 text-indigo-300 px-3 py-1.5 rounded-full border border-indigo-800/50 flex items-center space-x-1.5 transition">
-                    <i class="fa-solid fa-dice"></i>
-                    <span>おまかせレシピ</span>
-                </button>
                 <button id="openApiKeyModal" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700/50 flex items-center space-x-1.5 transition">
                     <i class="fa-solid fa-key text-indigo-400"></i>
                     <span>設定</span>
@@ -54,7 +50,7 @@
                 <textarea id="promptInput" rows="3" placeholder="例: 明治大学の武道館での卒業式、満開の桜..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
             </div>
 
-            <!-- 1. Visual Style Selector Cards -->
+            <!-- Visual Style Selector Cards -->
             <div class="space-y-1.5">
                 <label class="text-xs font-medium text-slate-400">画風スタイル (カード選択)</label>
                 <div class="grid grid-cols-2 gap-2" id="styleCardsContainer">
@@ -90,7 +86,7 @@
                 </select>
             </div>
 
-            <!-- 3. Google Search Grounding Toggle -->
+            <!-- Google Search Grounding Toggle -->
             <div class="flex items-center justify-between bg-slate-950 border border-slate-800 p-3 rounded-xl">
                 <div class="space-y-0.5">
                     <label class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
@@ -118,7 +114,7 @@
                 <p class="text-[10px] text-slate-500">※画像は構図・ポーズの参考としてのみ利用し、そのままコピーしません。</p>
             </div>
 
-            <!-- 4. Real-time Prompt Preview -->
+            <!-- Real-time Prompt Preview -->
             <div class="space-y-1 bg-slate-950 border border-slate-800 p-3 rounded-xl">
                 <div class="flex justify-between items-center">
                     <span class="text-[11px] font-medium text-slate-400">送信プロンプト プレビュー</span>
@@ -154,12 +150,11 @@
                 <!-- Result Image Container -->
                 <div id="resultContainer" class="hidden flex flex-col items-center space-y-4 w-full">
                     
-                    <!-- 5. Image Comparison / Result Viewer -->
                     <div class="relative w-full flex justify-center">
                         <img id="resultImage" src="" class="max-h-[380px] w-auto rounded-xl shadow-2xl border border-slate-800 object-contain">
                     </div>
                     
-                    <!-- 2. Refinement / Differential Chat Input -->
+                    <!-- Refinement / Differential Chat Input -->
                     <div class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-3 space-y-2">
                         <label class="text-xs font-medium text-slate-400 flex items-center gap-1.5">
                             <i class="fa-solid fa-pen-nib text-indigo-400"></i> 差分指示チャット (例: 「背景の看板の文字を消して」「もっと明るく赤にして」)
@@ -249,7 +244,7 @@
         let galleryImages = [];
         let bookmarkedImages = [];
 
-        // 1. Style Cards Selection
+        // Style Cards Selection
         const styleCards = document.querySelectorAll('.style-card');
         styleCards.forEach(card => {
             card.addEventListener('click', () => {
@@ -288,19 +283,6 @@
         document.getElementById('copyPromptBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(document.getElementById('promptPreviewText').textContent);
             alert('プロンプトをコピーしました！');
-        });
-
-        // 6. Lucky / Random Recipe (おまかせレシピ)
-        const luckyRecipes = [
-            "満開の桜が咲き誇る明治大学の武道館の前で、誇らしげに卒業証書を持つ親子の記念撮影、シネマティック実写",
-            "近未来の東京を愛犬の柴犬と一緒に散歩するサイバーパンクなスタイル、ネオンの輝き",
-            "緑豊かな森の中に佇むおしゃれな隠れ家エステサロンのインテリア、温かみのある木目調と間接照明",
-            "フランスの街角のオープンカフェでクロワッサンとカフェラテを楽しむリラックスした朝の情景、水彩画風"
-        ];
-        document.getElementById('luckyBtn').addEventListener('click', () => {
-            const randomPrompt = luckyRecipes[Math.floor(Math.random() * luckyRecipes.length)];
-            promptInput.value = randomPrompt;
-            updatePromptPreview();
         });
 
         // Image Upload Handler
@@ -376,7 +358,7 @@
             }
         });
 
-        // 7. Bookmark Handler
+        // Bookmark Handler
         let currentActiveImage = null;
         document.getElementById('bookmarkBtn').addEventListener('click', () => {
             if (currentActiveImage && !bookmarkedImages.includes(currentActiveImage)) {
@@ -430,7 +412,6 @@
                     }
                 };
 
-                // 3. Google Search Grounding Integration
                 if (useSearch) {
                     requestBody.tools = [{ "google_search": {} }];
                 }
